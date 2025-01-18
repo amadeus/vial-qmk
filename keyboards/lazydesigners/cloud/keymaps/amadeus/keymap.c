@@ -65,6 +65,15 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     ),
 };
 
+#if defined(ENCODER_MAP_ENABLE)
+const uint16_t PROGMEM encoder_map[][NUM_ENCODERS][NUM_DIRECTIONS] = {
+    [_BASE]   = { ENCODER_CCW_CW(KC_VOLD,  KC_VOLU) },
+    [_LOWER]  = { ENCODER_CCW_CW(RGB_RMOD, RGB_MOD) },
+    [_RAISE]  = { ENCODER_CCW_CW(RGB_HUD,  RGB_HUI) },
+    [_ADJUST] = { ENCODER_CCW_CW(RGB_SAD,  RGB_SAI) },
+};
+#endif
+
 // Custom Caps Word implementation -- basically only shift letters, not
 // symbols, given my layout
 bool caps_word_press_user(uint16_t keycode) {
@@ -85,12 +94,3 @@ bool caps_word_press_user(uint16_t keycode) {
             return false;
     }
 }
-
-#if defined(ENCODER_MAP_ENABLE)
-const uint16_t PROGMEM encoder_map[][NUM_ENCODERS][NUM_DIRECTIONS] = {
-    [_BASE]   = { ENCODER_CCW_CW(KC_VOLD,  KC_VOLU) },
-    [_LOWER]  = { ENCODER_CCW_CW(RGB_RMOD, RGB_MOD) },
-    [_RAISE]  = { ENCODER_CCW_CW(RGB_VAD,  RGB_VAI) },
-    [_ADJUST] = { ENCODER_CCW_CW(RGB_HUD,  RGB_HUI) },
-};
-#endif
