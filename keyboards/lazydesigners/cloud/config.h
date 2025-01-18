@@ -29,6 +29,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #define DIODE_DIRECTION COL2ROW
 
+#define BOTH_SHIFTS_TURNS_ON_CAPS_WORD
+
 /* RBG underglow */
 #define WS2812_DI_PIN D0
 #ifdef WS2812_DI_PIN
