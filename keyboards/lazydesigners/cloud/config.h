@@ -55,3 +55,5 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define RGBLIGHT_EFFECT_TWINKLE
 
 #endif
+
+#define RGB_BACKLIGHT_DISABLE_AFTER_TIMEOUT 10
