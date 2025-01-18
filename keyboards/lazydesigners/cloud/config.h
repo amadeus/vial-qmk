@@ -39,8 +39,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifdef WS2812_DI_PIN
 	#define RGBLIGHT_SLEEP
 	#define RGBLIGHT_LED_COUNT 15
-	#define RGBLIGHT_HUE_STEP 8
-	#define RGBLIGHT_SAT_STEP 8
+	#define RGBLIGHT_HUE_STEP 1
+	#define RGBLIGHT_SAT_STEP 1
 	#define RGBLIGHT_VAL_STEP 8
 
 #define RGBLIGHT_EFFECT_BREATHING
