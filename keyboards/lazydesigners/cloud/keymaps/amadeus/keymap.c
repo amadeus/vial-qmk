@@ -27,9 +27,6 @@ void alt_finished(tap_dance_state_t *state, void *user_data) {
 
 tap_dance_action_t tap_dance_actions[] = {[TD_FLASH] = ACTION_TAP_DANCE_FN_ADVANCED(NULL, alt_finished, NULL)};
 
-#define LT2_TAB LT(2, KC_TAB)
-#define LT1_SPC LT(1, KC_SPC)
-
 enum cloud_layers {
   _BASE,
   _LOWER,
