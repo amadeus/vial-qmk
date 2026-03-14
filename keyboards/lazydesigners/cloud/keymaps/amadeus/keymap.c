@@ -21,7 +21,7 @@ enum {
 };
 
 void alt_finished(tap_dance_state_t *state, void *user_data) {
-    if (state->count == 3) {
+    if (state->count == 5) {
         reset_keyboard();
     }
 };
