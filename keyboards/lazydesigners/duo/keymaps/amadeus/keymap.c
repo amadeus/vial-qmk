@@ -13,16 +13,13 @@ enum duo_layers {
     _ADJUST,
 };
 
-void alt_finished(tap_dance_state_t *state, void *user_data) {
-    if (state->count == 3) {
+void trigger_reset(tap_dance_state_t *state, void *user_data) {
+    if (state->count == 5) {
         reset_keyboard();
     }
 };
 
-tap_dance_action_t tap_dance_actions[] = {[TD_FLASH] = ACTION_TAP_DANCE_FN_ADVANCED(NULL, alt_finished, NULL)};
-
-#define LT_LOWER_SPC LT(_LOWER, KC_SPC)
-#define LT_RAISE_SPC LT(_RAISE, KC_SPC)
+tap_dance_action_t tap_dance_actions[] = {[TD_FLASH] = ACTION_TAP_DANCE_FN_ADVANCED(NULL, trigger_reset, NULL)};
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     /* Base
@@ -42,7 +39,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         KC_RCTL, KC_A, KC_S, KC_D, KC_F, KC_G, KC_H, KC_J, KC_K,    KC_L,   KC_SCLN, KC_QUOT,
         KC_LSFT, KC_Z, KC_X, KC_C, KC_V, KC_B, KC_N, KC_M, KC_COMM, KC_DOT, KC_SLSH, KC_RSFT,
 
-        KC_ESC, KC_LALT, KC_LGUI, LT_LOWER_SPC, KC_SPC, LT_RAISE_SPC, KC_RGUI, KC_RALT, KC_ENT),
+        KC_ESC, KC_LALT, KC_LGUI, MO(1), KC_SPC, MO(2), KC_RGUI, KC_RALT, KC_ENT),
 
     /* Lower
      * ╭───────┬───────┬───────┬───────┬───────┬───────┬───────┬───────┬───────┬───────┬───────┬───────╮
@@ -52,7 +49,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
      * ├───────┼───────┼───────┼───────┼───────┼───────┼───────┼───────┼───────┼───────┼───────┼───────┤
      * │   ,   │   <   │   >   │   =   │   -   │   _   │   +   │   {   │   }   │   [   │   ]   │   .   │
      * ├───────┼───────┼───────┼───────┴───────┴───┬───┴───┬───┴───────┴───────┼───────┼───────┼───────┤
-     * │       │       │       │                   │       │                   │       │       │       │
+     * │       │       │       │                   │       │    MO(_ADJUST)    │       │       │       │
      * ╰───────┴───────┴───────┴───────────────────┴───────┴───────────────────┴───────┴───────┴───────╯
      */
     [_LOWER] = LAYOUT(
@@ -71,7 +68,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
      * ├───────┼───────┼───────┼───────┼───────┼───────┼───────┼───────┼───────┼───────┼───────┼───────┤
      * │ Shift │       │ Pause │ ScrLk │ Ins   │       │       │       │       │       │       │ Shift │
      * ├───────┼───────┼───────┼───────┴───────┴───┬───┴───┬───┴───────┴───────┼───────┼───────┼───────┤
-     * │       │       │       │                   │       │                   │       │       │       │
+     * │       │       │       │    MO(_ADJUST)    │       │                   │       │       │       │
      * ╰───────┴───────┴───────┴───────────────────┴───────┴───────────────────┴───────┴───────┴───────╯
      */
     [_RAISE] = LAYOUT(
