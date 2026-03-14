@@ -31,8 +31,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #define BOTH_SHIFTS_TURNS_ON_CAPS_WORD
 
-#define DEBOUNCE 5
-
 /* RBG underglow */
 #define WS2812_DI_PIN D0
 #ifdef WS2812_DI_PIN
