@@ -13,6 +13,7 @@ Firmwares are built with the qmk cli (it brings its own toolchains, so plain
 qmk compile -kb lazydesigners/cloud -km amadeus
 qmk compile -kb lazydesigners/duo -km amadeus
 qmk compile -kb lazydesigners/kradlex -km amadeus
+qmk compile -kb lazydesigners/dimpler3 -km amadeus
 ```
 
 Layouts are configured separately but in the same branch so AI can easily
