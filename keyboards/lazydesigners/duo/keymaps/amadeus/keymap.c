@@ -2,9 +2,8 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 
 #include QMK_KEYBOARD_H
-enum {
-    TD_FLASH,
-};
+
+#include "amadeus.h"
 
 enum duo_layers {
     _BASE,
@@ -12,14 +11,6 @@ enum duo_layers {
     _RAISE,
     _ADJUST,
 };
-
-void trigger_reset(tap_dance_state_t *state, void *user_data) {
-    if (state->count == 5) {
-        reset_keyboard();
-    }
-};
-
-tap_dance_action_t tap_dance_actions[] = {[TD_FLASH] = ACTION_TAP_DANCE_FN_ADVANCED(NULL, trigger_reset, NULL)};
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     /* Base
@@ -98,19 +89,3 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
         KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, TD(TD_FLASH)),
 };
-
-bool caps_word_press_user(uint16_t keycode) {
-    switch (keycode) {
-        case KC_A ... KC_Z:
-            add_weak_mods(MOD_BIT(KC_LSFT));
-            return true;
-        case KC_MINS:
-        case KC_1 ... KC_0:
-        case KC_BSPC:
-        case KC_DEL:
-        case KC_UNDS:
-            return true;
-        default:
-            return false;
-    }
-}

@@ -3,17 +3,7 @@
 
 #include QMK_KEYBOARD_H
 
-enum {
-    TD_FLASH,
-};
-
-void alt_finished(tap_dance_state_t *state, void *user_data) {
-    if (state->count == 5) {
-        reset_keyboard();
-    }
-};
-
-tap_dance_action_t tap_dance_actions[] = {[TD_FLASH] = ACTION_TAP_DANCE_FN_ADVANCED(NULL, alt_finished, NULL)};
+#include "amadeus.h"
 
 enum kradlex_layers {
   _BASE,
@@ -92,24 +82,3 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         KC_ESC,   KC_LCTL,  KC_LALT,  KC_LGUI,  KC_TRNS,  KC_SPC,   KC_TRNS,  KC_RGUI,  KC_RALT,   KC_RCTL,  TD(TD_FLASH)
     ),
 };
-
-// Custom Caps Word implementation -- basically only shift letters, not
-// symbols, given my layout
-bool caps_word_press_user(uint16_t keycode) {
-    switch (keycode) {
-        // Capitalize all letter keys
-        case KC_A ... KC_Z:
-            add_weak_mods(MOD_BIT(KC_LSFT));
-            return true;
-        // Keycodes that still continue Caps Word
-        case KC_MINS:
-        case KC_1 ... KC_0:
-        case KC_BSPC:
-        case KC_DEL:
-        case KC_UNDS:
-            return true;
-        // Otherwise, stop Caps Word
-        default:
-            return false;
-    }
-}
