@@ -3,8 +3,9 @@
 If updating the firmware from stable, make sure to first do a `git submodule
 update` to make sure you on the latest submodules.
 
-I have 2 more LAZYDESIGNER keyboards coming soon (beyond the 2 already here), so
-I will be outfitting this with more keymaps as time goes on.
+The four current LAZYDESIGNERS boards share common personal behavior through
+`users/amadeus/`; each board keymap only carries its physical layout and any
+hardware-specific options.
 
 Firmwares are built with the qmk cli (it brings its own toolchains, so plain
 `make` won't find arm-none-eabi-gcc for the ARM boards):
@@ -34,14 +35,16 @@ firmware install as lean as possible.
 2. Port over the closest existing `keymaps/amadeus/` (kradlex for MIT ortho
    boards, cloud if the board has an encoder/RGB, duo for the weird ones),
    keeping the scaffold's `LAYOUT` macro and key count -- check the board's
-   `info.json`/`keyboard.json` for physical key sizes
-3. Keep the required features: double shift Caps Word (plus the custom
-   `caps_word_press_user` that only shifts letters), the 5 tap `TD_FLASH`
-   bootloader on Enter in Adjust, `asym_eager_defer_pk` debounce with
-   `DEBOUNCE 16`, and vial/via stripped out of rules.mk
+   `keyboard.json` for physical key sizes
+3. Name the keymap `amadeus` so QMK automatically includes
+   `users/amadeus/`. That userspace provides double-Shift Caps Word, the
+   custom Caps Word continuation rules, the five-tap `TD_FLASH` bootloader
+   action, and the shared debounce settings.
 4. Drop anything the hardware doesn't have (encoder maps, RGB keycodes)
    rather than leaving dead keys around
-5. Redraw the ASCII art to match the physical key sizes, then build with
+5. Keep hardware-specific options in the keymap's `rules.mk` (for example,
+   Cloud's encoder map) rather than adding them to the shared userspace.
+6. Redraw the ASCII art to match the physical key sizes, then build with
    `qmk compile -kb lazydesigners/<board> -km amadeus` and make sure it's
    warning-free
 

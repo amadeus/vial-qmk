@@ -1,6 +1,6 @@
 {
     "manufacturer": "lazydesigners",
-    "keyboard_name": "duo",
+    "keyboard_name": "Kradle X",
     "maintainer": "lazydesigners",
     "bootloader": "stm32-dfu",
     "diode_direction": "COL2ROW",
@@ -18,7 +18,7 @@
     "url": "http://lazydesigners.cn",
     "usb": {
         "device_version": "0.0.1",
-        "pid": "0x0044",
+        "pid": "0x0047",
         "vid": "0x4C44"
     },
     "layouts": {
@@ -60,15 +60,17 @@
                 {"matrix": [2, 9], "x": 9, "y": 2},
                 {"matrix": [2, 10], "x": 10, "y": 2},
                 {"matrix": [2, 11], "x": 11, "y": 2},
-                {"matrix": [3, 0], "x": 0, "y": 3, "w": 1.25},
-                {"matrix": [3, 1], "x": 1.25, "y": 3},
-                {"matrix": [3, 2], "x": 2.25, "y": 3, "w": 1.25},
-                {"matrix": [3, 4], "x": 3.5, "y": 3, "w": 2},
-                {"matrix": [3, 6], "x": 5.5, "y": 3},
-                {"matrix": [3, 7], "x": 6.5, "y": 3, "w": 2},
-                {"matrix": [3, 8], "x": 8.5, "y": 3, "w": 1.25},
-                {"matrix": [3, 9], "x": 9.75, "y": 3},
-                {"matrix": [3, 10], "x": 10.75, "y": 3, "w": 1.25}
+                {"matrix": [3, 0], "x": 0, "y": 3},
+                {"matrix": [3, 1], "x": 1, "y": 3},
+                {"matrix": [3, 2], "x": 2, "y": 3},
+                {"matrix": [3, 3], "x": 3, "y": 3},
+                {"matrix": [3, 4], "x": 4, "y": 3},
+                {"matrix": [3, 5], "x": 5, "y": 3, "w": 2},
+                {"matrix": [3, 7], "x": 7, "y": 3},
+                {"matrix": [3, 8], "x": 8, "y": 3},
+                {"matrix": [3, 9], "x": 9, "y": 3},
+                {"matrix": [3, 10], "x": 10, "y": 3},
+                {"matrix": [3, 11], "x": 11, "y": 3}
             ]
         }
     }
