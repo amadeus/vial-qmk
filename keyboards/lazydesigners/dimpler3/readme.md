@@ -9,4 +9,3 @@ Dimple R1 and R2 are not compatible with the new Dimple R3 PCB design.
 
 
 **Reset Key:** To enter the bootloader, press the boot button and short the reset pads together on the PCB.
-
