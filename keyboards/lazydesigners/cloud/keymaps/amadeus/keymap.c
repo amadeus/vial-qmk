@@ -25,6 +25,8 @@ enum cloud_layers {
     _ADJUST,
 };
 
+static bool rgblight_disabled_for_idle = false;
+
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     /* Base
      * ╭──────╮ ╭───────┬───────╮
@@ -120,3 +122,28 @@ const uint16_t PROGMEM encoder_map[][NUM_ENCODERS][NUM_DIRECTIONS] = {
     [_ADJUST] = { ENCODER_CCW_CW(RGB_SAD,  RGB_SAI) },
 };
 #endif
+
+bool process_record_user(uint16_t keycode, keyrecord_t *record) {
+    (void)keycode;
+
+    if (record->event.pressed && rgblight_disabled_for_idle) {
+        rgblight_enable_noeeprom();
+        rgblight_disabled_for_idle = false;
+    }
+
+    return true;
+}
+
+void housekeeping_task_user(void) {
+    const uint32_t idle_elapsed = last_input_activity_elapsed();
+
+    if (rgblight_disabled_for_idle) {
+        if (idle_elapsed < RGBLIGHT_IDLE_TIMEOUT_MS) {
+            rgblight_enable_noeeprom();
+            rgblight_disabled_for_idle = false;
+        }
+    } else if (rgblight_is_enabled() && idle_elapsed >= RGBLIGHT_IDLE_TIMEOUT_MS) {
+        rgblight_disable_noeeprom();
+        rgblight_disabled_for_idle = true;
+    }
+}
