@@ -17,12 +17,17 @@
 #include QMK_KEYBOARD_H
 
 #include "amadeus.h"
+#include "cloud_reactive_rgb.h"
 
 enum cloud_layers {
     _BASE,
     _LOWER,
     _RAISE,
     _ADJUST,
+};
+
+enum cloud_keycodes {
+    CLOUD_REACTIVE = SAFE_RANGE,
 };
 
 static bool rgblight_disabled_for_idle = false;
@@ -93,7 +98,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     ),
     /* Adjust
      * ╭───────╮ ╭──────┬──────╮
-     * │ ----- │ │ Sat- │ Sat+ │
+     * │ React │ │ Sat- │ Sat+ │
      * ╰───────╯ ╰──────┴──────╯
      * ╭───────┬───────┬───────┬───────┬───────┬───────┬───────┬───────┬───────┬───────┬───────┬───────╮
      * │       │  F1   │  F2   │  F3   │  F4   │  F5   │  F6   │  F7   │  F8   │  F9   │  F10  │  F11  │
@@ -106,7 +111,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
      * ╰───────┴───────┴───────┴───────┴───────┴───────────────┴───────┴───────┴───────┴───────┴───────╯
      */
     [_ADJUST] = LAYOUT_ortho(
-        KC_NO,
+        CLOUD_REACTIVE,
         KC_NO,    KC_F1,    KC_F2,    KC_F3,    KC_F4,    KC_F5,    KC_F6,    KC_F7,    KC_F8,     KC_F9,    KC_F10,   KC_F11,
         KC_RCTL,  KC_NO,    KC_NO,    KC_BRIU,  KC_VOLU,  KC_MPLY,  KC_NO,    KC_CAPS,  RGB_MOD,   RGB_HUI,  RGB_SPI,  KC_F12,
         KC_LSFT,  KC_NO,    KC_NO,    KC_BRID,  KC_VOLD,  KC_MUTE,  KC_NO,    KC_PSCR,  RGB_TOG,   RGB_HUD,  RGB_SPD,  KC_RSFT,
@@ -124,12 +129,17 @@ const uint16_t PROGMEM encoder_map[][NUM_ENCODERS][NUM_DIRECTIONS] = {
 #endif
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
-    (void)keycode;
-
     if (record->event.pressed && rgblight_disabled_for_idle) {
         rgblight_enable_noeeprom();
         rgblight_disabled_for_idle = false;
     }
+
+    if (keycode == CLOUD_REACTIVE) {
+        cloud_reactive_rgb_activate(record);
+        return false;
+    }
+
+    cloud_reactive_rgb_process_record(record);
 
     return true;
 }
@@ -146,4 +156,6 @@ void housekeeping_task_user(void) {
         rgblight_disable_noeeprom();
         rgblight_disabled_for_idle = true;
     }
+
+    cloud_reactive_rgb_task();
 }
