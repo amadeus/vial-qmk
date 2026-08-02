@@ -9,7 +9,9 @@
 #define CLOUD_REACTIVE_FRAME_INTERVAL_MS 16U
 #define CLOUD_REACTIVE_HIT_INCREMENT 160U
 #define CLOUD_REACTIVE_NEIGHBOR_INCREMENT 56U
-#define CLOUD_REACTIVE_FADE_STEP 3U
+#define CLOUD_REACTIVE_FADE_STEP 8U
+#define CLOUD_REACTIVE_HOLD_LEVEL 48U
+#define CLOUD_REACTIVE_HOLD_NEIGHBOR_LEVEL 16U
 
 // The PCB does not document which end of the light bar is LED 0. Set this to 1
 // if the first hardware test shows key presses mirrored across the bar.

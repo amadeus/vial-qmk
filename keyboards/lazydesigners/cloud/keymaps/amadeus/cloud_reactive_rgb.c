@@ -15,6 +15,10 @@
 #    error "Cloud reactive RGB map expects 13 matrix columns"
 #endif
 
+#if CLOUD_REACTIVE_HOLD_LEVEL > UINT8_MAX || CLOUD_REACTIVE_HOLD_NEIGHBOR_LEVEL > UINT8_MAX
+#    error "Cloud reactive hold settings must fit in a uint8_t"
+#endif
+
 static bool     was_active                 = false;
 static bool     dirty                      = false;
 static bool     animating                  = false;
@@ -80,6 +84,32 @@ static void record_keypress(const keyrecord_t *record) {
     }
     dirty     = true;
     animating = true;
+}
+
+static void set_energy_floor(uint8_t led, uint8_t minimum) {
+    if (energy[led] < minimum) {
+        energy[led] = minimum;
+    }
+}
+
+static void apply_hold_levels(void) {
+    for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
+        for (uint8_t col = 0; col < MATRIX_COLS; col++) {
+            if (!matrix_is_on(row, col)) {
+                continue;
+            }
+
+            const uint8_t center = pgm_read_byte(&led_for_column[col]);
+
+            set_energy_floor(center, CLOUD_REACTIVE_HOLD_LEVEL);
+            if (center > 0) {
+                set_energy_floor(center - 1, CLOUD_REACTIVE_HOLD_NEIGHBOR_LEVEL);
+            }
+            if (center + 1 < RGBLIGHT_LED_COUNT) {
+                set_energy_floor(center + 1, CLOUD_REACTIVE_HOLD_NEIGHBOR_LEVEL);
+            }
+        }
+    }
 }
 
 static void decay(uint32_t elapsed) {
@@ -157,6 +187,7 @@ void cloud_reactive_rgb_task(void) {
         decay(elapsed);
     }
 
+    apply_hold_levels();
     render();
     dirty = false;
 }

@@ -31,6 +31,16 @@ enum cloud_keycodes {
 };
 
 static bool rgblight_disabled_for_idle = false;
+static bool boot_tap_in_progress       = false;
+static uint16_t boot_tap_timer         = 0;
+
+static bool boot_tap_is_active(void) {
+    if (boot_tap_in_progress && timer_elapsed(boot_tap_timer) > TAPPING_TERM) {
+        boot_tap_in_progress = false;
+    }
+
+    return boot_tap_in_progress;
+}
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     /* Base
@@ -139,6 +149,17 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         return false;
     }
 
+    if (keycode == TD(TD_FLASH)) {
+        if (record->event.pressed) {
+            // Bitbanged WS2812 frames briefly block matrix scanning. Pause the
+            // reactive renderer after the first boot tap so the rest are clean.
+            boot_tap_timer       = timer_read();
+            boot_tap_in_progress = true;
+        }
+
+        return true;
+    }
+
     cloud_reactive_rgb_process_record(record);
 
     return true;
@@ -157,5 +178,7 @@ void housekeeping_task_user(void) {
         rgblight_disabled_for_idle = true;
     }
 
-    cloud_reactive_rgb_task();
+    if (!boot_tap_is_active()) {
+        cloud_reactive_rgb_task();
+    }
 }

@@ -23,6 +23,16 @@
 #    define CLOUD_REACTIVE_FADE_STEP 3U
 #endif
 
+// A held key settles from its initial pulse to these steady energy levels. Its
+// normal fade resumes from here as soon as the last key in that column releases.
+#ifndef CLOUD_REACTIVE_HOLD_LEVEL
+#    define CLOUD_REACTIVE_HOLD_LEVEL 96U
+#endif
+
+#ifndef CLOUD_REACTIVE_HOLD_NEIGHBOR_LEVEL
+#    define CLOUD_REACTIVE_HOLD_NEIGHBOR_LEVEL 32U
+#endif
+
 #ifndef CLOUD_REACTIVE_REVERSE_LED_ORDER
 #    define CLOUD_REACTIVE_REVERSE_LED_ORDER 0
 #endif
