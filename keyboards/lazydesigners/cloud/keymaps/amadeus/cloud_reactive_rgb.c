@@ -24,6 +24,7 @@ static bool     dirty                      = false;
 static bool     animating                  = false;
 static uint32_t last_frame                 = 0;
 static uint8_t  energy[RGBLIGHT_LED_COUNT] = {0};
+static uint16_t wide_key_rows[MATRIX_ROWS] = {0};
 
 // Photo-calibrated Q4 positions: 16 units equal one LED. Fractional positions
 // blend the existing center-and-neighbor profile between adjacent pixels. The
@@ -90,7 +91,7 @@ static void apply_energy_level(int8_t led, uint16_t amount, bool as_floor) {
     }
 }
 
-static void apply_profile(uint8_t position_q4, uint8_t center_amount, uint8_t neighbor_amount, bool as_floor) {
+static void apply_profile(uint8_t position_q4, uint8_t center_amount, uint8_t neighbor_amount, bool wide, bool as_floor) {
     if (position_q4 > ((RGBLIGHT_LED_COUNT - 1U) << 4)) {
         return;
     }
@@ -102,22 +103,51 @@ static void apply_profile(uint8_t position_q4, uint8_t center_amount, uint8_t ne
     const uint8_t neighbor_high = interpolated_high(neighbor_amount, fraction);
     const uint8_t neighbor_low  = neighbor_amount - neighbor_high;
 
-    // This is the linear blend of the old three-pixel profile centered at
-    // `base` and the same profile centered at `base + 1`.
+    const uint16_t base_level = (uint16_t)center_low + neighbor_high;
+    const uint16_t next_level = (uint16_t)center_high + neighbor_low;
+
+    // This linearly shifts either the normal three-pixel profile or a wide
+    // four-pixel profile. The wide form keeps two center lanes at equal energy
+    // without double-brightening their overlap.
     apply_energy_level(base - 1, neighbor_low, as_floor);
-    apply_energy_level(base, (uint16_t)center_low + neighbor_high, as_floor);
-    apply_energy_level(base + 1, (uint16_t)center_high + neighbor_low, as_floor);
-    apply_energy_level(base + 2, neighbor_high, as_floor);
+    apply_energy_level(base, base_level, as_floor);
+    apply_energy_level(base + 1, wide ? center_amount : next_level, as_floor);
+    apply_energy_level(base + 2, wide ? next_level : neighbor_high, as_floor);
+    if (wide) {
+        apply_energy_level(base + 3, neighbor_high, as_floor);
+    }
 }
 
-static void record_keypress(const keyrecord_t *record) {
+static bool is_spacebar_keycode(uint16_t keycode) {
+    return get_tap_keycode(keycode) == KC_SPC;
+}
+
+static void update_wide_key_state(bool wide, const keyrecord_t *record) {
+    if (!IS_KEYEVENT(record->event) || record->event.key.row >= MATRIX_ROWS || record->event.key.col >= MATRIX_COLS) {
+        return;
+    }
+
+    const uint16_t mask = (uint16_t)1U << record->event.key.col;
+
+    if (record->event.pressed && wide) {
+        wide_key_rows[record->event.key.row] |= mask;
+    } else {
+        wide_key_rows[record->event.key.row] &= ~mask;
+    }
+}
+
+static bool is_wide_key_held(uint8_t row, uint8_t col) {
+    return wide_key_rows[row] & ((uint16_t)1U << col);
+}
+
+static void record_keypress(const keyrecord_t *record, bool wide) {
     if (!IS_KEYEVENT(record->event) || record->event.key.row >= MATRIX_ROWS || record->event.key.col >= MATRIX_COLS) {
         return;
     }
 
     const uint8_t position_q4 = pgm_read_byte(&led_position_q4_for_column[record->event.key.col]);
 
-    apply_profile(position_q4, CLOUD_REACTIVE_HIT_INCREMENT, CLOUD_REACTIVE_NEIGHBOR_INCREMENT, false);
+    apply_profile(position_q4, CLOUD_REACTIVE_HIT_INCREMENT, CLOUD_REACTIVE_NEIGHBOR_INCREMENT, wide, false);
 
     if (!animating) {
         last_frame = timer_read32();
@@ -135,7 +165,7 @@ static void apply_hold_levels(void) {
 
             const uint8_t position_q4 = pgm_read_byte(&led_position_q4_for_column[col]);
 
-            apply_profile(position_q4, CLOUD_REACTIVE_HOLD_LEVEL, CLOUD_REACTIVE_HOLD_NEIGHBOR_LEVEL, true);
+            apply_profile(position_q4, CLOUD_REACTIVE_HOLD_LEVEL, CLOUD_REACTIVE_HOLD_NEIGHBOR_LEVEL, is_wide_key_held(row, col), true);
         }
     }
 }
@@ -173,12 +203,16 @@ void cloud_reactive_rgb_activate(const keyrecord_t *record) {
     }
 
     rgblight_mode(CLOUD_REACTIVE_MODE);
-    record_keypress(record);
+    record_keypress(record, false);
 }
 
-void cloud_reactive_rgb_process_record(const keyrecord_t *record) {
+void cloud_reactive_rgb_process_record(uint16_t keycode, const keyrecord_t *record) {
+    const bool wide = is_spacebar_keycode(keycode);
+
+    update_wide_key_state(wide, record);
+
     if (record->event.pressed && is_active()) {
-        record_keypress(record);
+        record_keypress(record, wide);
     }
 }
 

@@ -160,7 +160,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         return true;
     }
 
-    cloud_reactive_rgb_process_record(record);
+    cloud_reactive_rgb_process_record(keycode, record);
 
     return true;
 }

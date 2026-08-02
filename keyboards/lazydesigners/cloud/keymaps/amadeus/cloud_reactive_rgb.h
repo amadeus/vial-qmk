@@ -38,5 +38,5 @@
 #endif
 
 void cloud_reactive_rgb_activate(const keyrecord_t *record);
-void cloud_reactive_rgb_process_record(const keyrecord_t *record);
+void cloud_reactive_rgb_process_record(uint16_t keycode, const keyrecord_t *record);
 void cloud_reactive_rgb_task(void);
