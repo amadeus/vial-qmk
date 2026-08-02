@@ -15,8 +15,12 @@
 #    error "Cloud reactive RGB map expects 13 matrix columns"
 #endif
 
-#if CLOUD_REACTIVE_HIT_INCREMENT > UINT8_MAX || CLOUD_REACTIVE_NEIGHBOR_INCREMENT > UINT8_MAX || CLOUD_REACTIVE_HOLD_LEVEL > UINT8_MAX || CLOUD_REACTIVE_HOLD_NEIGHBOR_LEVEL > UINT8_MAX
+#if CLOUD_REACTIVE_HIT_INCREMENT > UINT8_MAX || CLOUD_REACTIVE_NEIGHBOR_INCREMENT > UINT8_MAX || CLOUD_REACTIVE_FADE_STEP > UINT8_MAX || CLOUD_REACTIVE_HOLD_LEVEL > UINT8_MAX || CLOUD_REACTIVE_HOLD_NEIGHBOR_LEVEL > UINT8_MAX
 #    error "Cloud reactive energy settings must fit in a uint8_t"
+#endif
+
+#if CLOUD_REACTIVE_FADE_STEP == 0 || CLOUD_REACTIVE_HOLD_LEVEL == 0
+#    error "Cloud reactive fade settings are invalid"
 #endif
 
 static bool     was_active                 = false;
@@ -170,6 +174,10 @@ static void apply_hold_levels(void) {
     }
 }
 
+static uint8_t scaled_value_for_energy(uint8_t level, uint8_t max_value) {
+    return ((uint16_t)level * (max_value + 1U)) >> 8;
+}
+
 static void decay(uint32_t elapsed) {
     const uint32_t frames      = elapsed / CLOUD_REACTIVE_FRAME_INTERVAL_MS;
     const uint32_t fade_amount = MIN(frames * CLOUD_REACTIVE_FADE_STEP, UINT8_MAX);
@@ -181,13 +189,12 @@ static void decay(uint32_t elapsed) {
     last_frame += frames * CLOUD_REACTIVE_FRAME_INTERVAL_MS;
 }
 
-static void render(void) {
+static void render(uint8_t max_value) {
     const uint8_t hue        = rgblight_get_hue();
     const uint8_t saturation = rgblight_get_sat();
-    const uint8_t max_value  = rgblight_get_val();
 
     for (uint8_t i = 0; i < RGBLIGHT_LED_COUNT; i++) {
-        const uint8_t value = ((uint16_t)energy[i] * (max_value + 1U)) >> 8;
+        const uint8_t value = scaled_value_for_energy(energy[i], max_value);
         const rgb_t   rgb   = hsv_to_rgb((hsv_t){hue, saturation, value});
 
         rgblight_driver.set_color(driver_index(i), rgb.r, rgb.g, rgb.b);
@@ -245,11 +252,13 @@ void cloud_reactive_rgb_task(void) {
         return;
     }
 
+    const uint8_t max_value = rgblight_get_val();
+
     if (elapsed >= CLOUD_REACTIVE_FRAME_INTERVAL_MS) {
         decay(elapsed);
     }
 
     apply_hold_levels();
-    render();
+    render(max_value);
     dirty = false;
 }
