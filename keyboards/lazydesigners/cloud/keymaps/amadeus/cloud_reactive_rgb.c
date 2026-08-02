@@ -15,8 +15,8 @@
 #    error "Cloud reactive RGB map expects 13 matrix columns"
 #endif
 
-#if CLOUD_REACTIVE_HOLD_LEVEL > UINT8_MAX || CLOUD_REACTIVE_HOLD_NEIGHBOR_LEVEL > UINT8_MAX
-#    error "Cloud reactive hold settings must fit in a uint8_t"
+#if CLOUD_REACTIVE_HIT_INCREMENT > UINT8_MAX || CLOUD_REACTIVE_NEIGHBOR_INCREMENT > UINT8_MAX || CLOUD_REACTIVE_HOLD_LEVEL > UINT8_MAX || CLOUD_REACTIVE_HOLD_NEIGHBOR_LEVEL > UINT8_MAX
+#    error "Cloud reactive energy settings must fit in a uint8_t"
 #endif
 
 static bool     was_active                 = false;
@@ -25,10 +25,12 @@ static bool     animating                  = false;
 static uint32_t last_frame                 = 0;
 static uint8_t  energy[RGBLIGHT_LED_COUNT] = {0};
 
-// Cloud's twelve key columns are spread across its 15-pixel light bar. Matrix
-// column 12 is the encoder push, which sits at the far-left end of the board.
-static const uint8_t PROGMEM led_for_column[MATRIX_COLS] = {
-    0, 1, 3, 4, 5, 6, 8, 9, 10, 11, 13, 14, 0,
+// Photo-calibrated Q4 positions: 16 units equal one LED. Fractional positions
+// blend the existing center-and-neighbor profile between adjacent pixels. The
+// strip starts near Q, so Tab uses the nearest available position. Matrix
+// column 12 is the encoder push at the far-left end of the board.
+static const uint8_t PROGMEM led_position_q4_for_column[MATRIX_COLS] = {
+    0, 6, 28, 49, 70, 92, 113, 134, 156, 177, 198, 219, 0,
 };
 
 static bool is_active(void) {
@@ -64,32 +66,64 @@ static void add_energy(uint8_t led, uint8_t amount) {
     energy[led] = increased > UINT8_MAX ? UINT8_MAX : increased;
 }
 
+static void set_energy_floor(uint8_t led, uint8_t minimum) {
+    if (energy[led] < minimum) {
+        energy[led] = minimum;
+    }
+}
+
+static uint8_t interpolated_high(uint8_t amount, uint8_t fraction) {
+    return ((uint16_t)amount * fraction + 8U) >> 4;
+}
+
+static void apply_energy_level(int8_t led, uint16_t amount, bool as_floor) {
+    if (led < 0 || led >= RGBLIGHT_LED_COUNT || amount == 0) {
+        return;
+    }
+
+    const uint8_t level = amount > UINT8_MAX ? UINT8_MAX : amount;
+
+    if (as_floor) {
+        set_energy_floor((uint8_t)led, level);
+    } else {
+        add_energy((uint8_t)led, level);
+    }
+}
+
+static void apply_profile(uint8_t position_q4, uint8_t center_amount, uint8_t neighbor_amount, bool as_floor) {
+    if (position_q4 > ((RGBLIGHT_LED_COUNT - 1U) << 4)) {
+        return;
+    }
+
+    const int8_t  base          = position_q4 >> 4;
+    const uint8_t fraction      = position_q4 & 0x0FU;
+    const uint8_t center_high   = interpolated_high(center_amount, fraction);
+    const uint8_t center_low    = center_amount - center_high;
+    const uint8_t neighbor_high = interpolated_high(neighbor_amount, fraction);
+    const uint8_t neighbor_low  = neighbor_amount - neighbor_high;
+
+    // This is the linear blend of the old three-pixel profile centered at
+    // `base` and the same profile centered at `base + 1`.
+    apply_energy_level(base - 1, neighbor_low, as_floor);
+    apply_energy_level(base, (uint16_t)center_low + neighbor_high, as_floor);
+    apply_energy_level(base + 1, (uint16_t)center_high + neighbor_low, as_floor);
+    apply_energy_level(base + 2, neighbor_high, as_floor);
+}
+
 static void record_keypress(const keyrecord_t *record) {
     if (!IS_KEYEVENT(record->event) || record->event.key.row >= MATRIX_ROWS || record->event.key.col >= MATRIX_COLS) {
         return;
     }
 
-    const uint8_t center = pgm_read_byte(&led_for_column[record->event.key.col]);
+    const uint8_t position_q4 = pgm_read_byte(&led_position_q4_for_column[record->event.key.col]);
 
-    add_energy(center, CLOUD_REACTIVE_HIT_INCREMENT);
-    if (center > 0) {
-        add_energy(center - 1, CLOUD_REACTIVE_NEIGHBOR_INCREMENT);
-    }
-    if (center + 1 < RGBLIGHT_LED_COUNT) {
-        add_energy(center + 1, CLOUD_REACTIVE_NEIGHBOR_INCREMENT);
-    }
+    apply_profile(position_q4, CLOUD_REACTIVE_HIT_INCREMENT, CLOUD_REACTIVE_NEIGHBOR_INCREMENT, false);
 
     if (!animating) {
         last_frame = timer_read32();
     }
     dirty     = true;
     animating = true;
-}
-
-static void set_energy_floor(uint8_t led, uint8_t minimum) {
-    if (energy[led] < minimum) {
-        energy[led] = minimum;
-    }
 }
 
 static void apply_hold_levels(void) {
@@ -99,15 +133,9 @@ static void apply_hold_levels(void) {
                 continue;
             }
 
-            const uint8_t center = pgm_read_byte(&led_for_column[col]);
+            const uint8_t position_q4 = pgm_read_byte(&led_position_q4_for_column[col]);
 
-            set_energy_floor(center, CLOUD_REACTIVE_HOLD_LEVEL);
-            if (center > 0) {
-                set_energy_floor(center - 1, CLOUD_REACTIVE_HOLD_NEIGHBOR_LEVEL);
-            }
-            if (center + 1 < RGBLIGHT_LED_COUNT) {
-                set_energy_floor(center + 1, CLOUD_REACTIVE_HOLD_NEIGHBOR_LEVEL);
-            }
+            apply_profile(position_q4, CLOUD_REACTIVE_HOLD_LEVEL, CLOUD_REACTIVE_HOLD_NEIGHBOR_LEVEL, true);
         }
     }
 }
