@@ -53,7 +53,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 #if defined(ENCODER_MAP_ENABLE)
 const uint16_t PROGMEM encoder_map[][NUM_ENCODERS][NUM_DIRECTIONS] = {
     [0] = { ENCODER_CCW_CW(KC_NO, KC_NO) },
-    [1] = { ENCODER_CCW_CW(KC_NO, KC_NO) },
+    [1] = { ENCODER_CCW_CW(RGB_SPD, RGB_SPI) },
     [2] = { ENCODER_CCW_CW(KC_NO, KC_NO) },
 };
 #endif
@@ -64,7 +64,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         return false;
     }
 
-    cloud_reactive_rgb_process_record(record);
+    cloud_reactive_rgb_process_record(keycode, record);
     return true;
 }
 

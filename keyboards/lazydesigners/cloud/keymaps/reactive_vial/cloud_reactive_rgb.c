@@ -15,18 +15,22 @@
 #    error "Cloud reactive RGB map expects 13 matrix columns"
 #endif
 
-#if CLOUD_REACTIVE_HIT_INCREMENT > UINT8_MAX || CLOUD_REACTIVE_NEIGHBOR_INCREMENT > UINT8_MAX || CLOUD_REACTIVE_FADE_STEP > UINT8_MAX || CLOUD_REACTIVE_HOLD_LEVEL > UINT8_MAX || CLOUD_REACTIVE_HOLD_NEIGHBOR_LEVEL > UINT8_MAX
+#if CLOUD_REACTIVE_HIT_INCREMENT > UINT8_MAX || CLOUD_REACTIVE_NEIGHBOR_INCREMENT > UINT8_MAX || CLOUD_REACTIVE_HOLD_LEVEL > UINT8_MAX || CLOUD_REACTIVE_HOLD_NEIGHBOR_LEVEL > UINT8_MAX
 #    error "Cloud reactive energy settings must fit in a uint8_t"
 #endif
 
-#if CLOUD_REACTIVE_FADE_STEP == 0 || CLOUD_REACTIVE_HOLD_LEVEL == 0
+#if CLOUD_REACTIVE_HOLD_LEVEL == 0
 #    error "Cloud reactive fade settings are invalid"
 #endif
 
 static bool     was_active                 = false;
 static bool     dirty                      = false;
 static bool     animating                  = false;
+static bool     speed_feedback_pending     = false;
+static bool     speed_feedback_active      = false;
 static uint32_t last_frame                 = 0;
+static uint32_t speed_feedback_timer       = 0;
+static uint8_t  speed_feedback_led_count   = 0;
 static uint8_t  energy[RGBLIGHT_LED_COUNT] = {0};
 
 // Cloud's twelve key columns are spread across its 15-pixel light bar. Matrix
@@ -146,6 +150,42 @@ static void render(uint8_t max_value) {
     animating = has_energy();
 }
 
+static void start_speed_feedback(void) {
+    const uint8_t speed = MIN(rgblight_get_speed(), 3U);
+
+    clear();
+    speed_feedback_led_count = 1U + ((uint16_t)(RGBLIGHT_LED_COUNT - 1U) * speed + 1U) / 3U;
+    speed_feedback_timer     = timer_read32();
+    last_frame              = speed_feedback_timer;
+    speed_feedback_active    = true;
+
+    for (uint8_t i = 0; i < RGBLIGHT_LED_COUNT; i++) {
+        energy[i] = i < speed_feedback_led_count ? UINT8_MAX : 0;
+    }
+
+    animating = true;
+    rgblight_timer_disable();
+    render(rgblight_get_val());
+}
+
+static void update_speed_feedback(void) {
+    const uint32_t elapsed = timer_elapsed32(last_frame);
+
+    if (elapsed >= CLOUD_REACTIVE_FRAME_INTERVAL_MS) {
+        decay(elapsed);
+    }
+
+    if (timer_elapsed32(speed_feedback_timer) < CLOUD_REACTIVE_SPEED_FEEDBACK_MS) {
+        for (uint8_t i = 0; i < speed_feedback_led_count; i++) {
+            energy[i] = UINT8_MAX;
+        }
+    }
+
+    if (elapsed >= CLOUD_REACTIVE_FRAME_INTERVAL_MS) {
+        render(rgblight_get_val());
+    }
+}
+
 void cloud_reactive_rgb_activate(const keyrecord_t *record) {
     if (!record->event.pressed) {
         return;
@@ -165,14 +205,50 @@ void cloud_reactive_rgb_activate(const keyrecord_t *record) {
     record_keypress(record);
 }
 
-void cloud_reactive_rgb_process_record(const keyrecord_t *record) {
-    if (record->event.pressed && is_active()) {
+void cloud_reactive_rgb_process_record(uint16_t keycode, const keyrecord_t *record) {
+    if (record->event.pressed && (keycode == RGB_SPD || keycode == RGB_SPI)) {
+        speed_feedback_pending = true;
+    }
+
+    if (record->event.pressed && is_active() && !speed_feedback_pending && !speed_feedback_active) {
         record_keypress(record);
     }
 }
 
 void cloud_reactive_rgb_task(void) {
-    if (!is_active()) {
+    const bool reactive_active = is_active();
+
+    if (speed_feedback_pending) {
+        speed_feedback_pending = false;
+
+        if (rgblight_is_enabled()) {
+            start_speed_feedback();
+        }
+    }
+
+    if (speed_feedback_active) {
+        if (!rgblight_is_enabled()) {
+            speed_feedback_active = false;
+            clear();
+        } else {
+            update_speed_feedback();
+
+            if (has_energy()) {
+                return;
+            }
+
+            speed_feedback_active = false;
+        }
+
+        if (!reactive_active) {
+            rgblight_mode_noeeprom(rgblight_get_mode());
+            return;
+        }
+
+        dirty = true;
+    }
+
+    if (!reactive_active) {
         if (was_active || dirty) {
             clear();
         }

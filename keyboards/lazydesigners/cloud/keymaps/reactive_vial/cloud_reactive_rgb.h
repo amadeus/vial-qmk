@@ -11,6 +11,10 @@
 #    define CLOUD_REACTIVE_FRAME_INTERVAL_MS 16U
 #endif
 
+#ifndef CLOUD_REACTIVE_SPEED_FEEDBACK_MS
+#    define CLOUD_REACTIVE_SPEED_FEEDBACK_MS 1000U
+#endif
+
 #ifndef CLOUD_REACTIVE_HIT_INCREMENT
 #    define CLOUD_REACTIVE_HIT_INCREMENT 160U
 #endif
@@ -36,5 +40,5 @@
 #endif
 
 void cloud_reactive_rgb_activate(const keyrecord_t *record);
-void cloud_reactive_rgb_process_record(const keyrecord_t *record);
+void cloud_reactive_rgb_process_record(uint16_t keycode, const keyrecord_t *record);
 void cloud_reactive_rgb_task(void);
