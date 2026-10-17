@@ -14,6 +14,17 @@
 #define CLOUD_REACTIVE_HOLD_LEVEL 48U
 #define CLOUD_REACTIVE_HOLD_NEIGHBOR_LEVEL 16U
 
+// Idle pendulum that takes over from the last fading light. Fixed timing; the
+// RGB speed setting only affects the reactive fade above.
+#define CLOUD_IDLE_BOUNCE_HANDOFF_SCALE 208U
+#define CLOUD_IDLE_BOUNCE_SWEEP_MS 500U
+#define CLOUD_IDLE_BOUNCE_RAMP_MS 250U
+#define CLOUD_IDLE_BOUNCE_FADE_OUT_MS 500U
+#define CLOUD_IDLE_BOUNCE_LEVEL 112U
+#define CLOUD_IDLE_BOUNCE_TRAIL_SCALE 128U
+#define CLOUD_IDLE_BOUNCE_TRAIL_DECAY 96U
+#define CLOUD_REACTIVE_DASH_FULL_SPAN_MS 150U
+
 // The PCB does not document which end of the light bar is LED 0. Set this to 1
 // if the first hardware test shows key presses mirrored across the bar.
 #define CLOUD_REACTIVE_REVERSE_LED_ORDER 0
